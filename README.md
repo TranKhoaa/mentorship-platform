@@ -33,7 +33,7 @@ A full-stack mentorship matching platform that connects mentees with suitable me
 ### 1 Clone repository
 
 
-- git clone https://github.com/YOUR_USERNAME/mentorship-platform.git
+- git clone https://github.com/TranKhoaa/mentorship-platform/tree/main
 - cd mentorship-platform
 ### 2 Clone repository
 - Navigate to the backend folder 
