@@ -1,0 +1,63 @@
+<style>
+  .header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 20px;
+    background-color: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    margin-bottom: 30px;
+  }
+
+  .header-left {
+    display: flex;
+    align-items: center;
+  }
+
+  .header-right {
+    display: flex;
+    align-items: center;
+  }
+
+  .header-right button {
+    margin-left: 10px;
+  }
+
+  @media (max-width: 600px) {
+  .header {
+    padding: 15px;
+    gap: 10px;
+  }
+
+  .header-left img {
+    max-width: 180px;
+    height: auto;
+  }
+
+  .header-right {
+    width: 100%;
+    justify-content: center;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+
+  .header-right button {
+    margin-left: 0;
+    font-size: 14px;
+    padding: 10px 20px;
+    width: auto;
+  }
+}
+
+</style>
+
+<header class="header">
+  <div class="header-left">
+    <a href="index.html">
+      <img src="./image/logo.png.webp" alt="Mentorship Logo" style="cursor: pointer;">
+    </a>
+  </div>
+  <div class="header-right" id="headerButtons">
+  </div>
+</header>

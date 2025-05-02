@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Profile - Mentorship Platform</title>
+  <link rel="stylesheet" href="style.css">
+  <style>
+    .container {
+      width: 400px;
+      margin: 80px auto;
+      background: #fff;
+      padding: 30px;
+      border-radius: 10px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    }
+
+    h2 {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+
+    input, textarea {
+      padding: 10px;
+      margin: 10px 0;
+      border-radius: 5px;
+      border: 1px solid #ccc;
+      width: 100%;
+    }
+
+    textarea {
+      resize: vertical;
+    }
+
+    a {
+      display: block;
+      text-align: center;
+      margin-top: 15px;
+      color: #00b1aa;
+    }
+
+    a:hover {
+      text-decoration: underline;
+    }
+    .popup {
+    display: none;
+    color: #00b1aa;
+    text-align: center;
+  }
+  @media (max-width: 500px) {
+  .container {
+    width: 90%;
+    margin: 40px auto;
+    padding: 20px;
+    box-sizing: border-box;
+  }
+
+  h2 {
+    font-size: 24px;
+  }
+
+  input, select, button {
+    font-size: 16px;
+  }
+  input {
+    max-width: 100%;
+  }
+  button {
+    width: 100%;
+  }
+}
+  </style>
+</head>
+<div id="headerContainer"></div>
+<script src="header.js"></script>
+<body>
+  <div class="container">
+    <h2>My Profile</h2>
+    <form id="profileForm">
+      <input type="text" id="name" placeholder="Name" required>
+      <input type="text" id="skills" placeholder="Skills (comma-separated)">
+      <input type="text" id="interests" placeholder="Interests (comma-separated)">
+      <textarea id="bio" placeholder="Brief Bio" rows="4"></textarea>
+      <button type="submit">Save Profile</button>
+    </form>
+    <a href="index.html">Back to Homepage</a>
+    <p class="error" id="profileError"></p>
+    <div id="popup" class="popup">Profile saved!</div>
+  </div>
+
+  <script>
+    const token = localStorage.getItem('token');
+    const errorEl = document.getElementById('profileError');
+
+    if (!token) {
+      window.location.href = 'login.html';
+    }
+
+    let hasProfile = false; 
+
+    async function fetchProfile() {
+      const res = await fetch('http://localhost:3000/api/profile', {
+        headers: { 'Authorization': 'Bearer ' + token }
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        if (data) {
+          hasProfile = true;
+          document.getElementById('name').value = data.name || '';
+          document.getElementById('skills').value = data.skills || '';
+          document.getElementById('interests').value = data.interests || '';
+          document.getElementById('bio').value = data.bio || '';
+
+        }
+      }
+    }
+
+    fetchProfile();
+
+    document.getElementById('profileForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      const name = document.getElementById('name').value;
+      const skills = document.getElementById('skills').value;
+      const interests = document.getElementById('interests').value;
+      const bio = document.getElementById('bio').value;
+
+      const method = hasProfile ? 'PATCH' : 'POST';
+
+      const res = await fetch('http://localhost:3000/api/profile', {
+        method: method,
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer ' + token
+        },
+        body: JSON.stringify({ name, skills, interests, bio })
+      });
+
+      const data = await res.json();
+
+      if (res.ok) {
+        const popup = document.getElementById('popup');
+        popup.style.display = 'block';
+        setTimeout(() => {
+          popup.style.display = 'none';
+          // window.location.href = 'index.html';
+        }, 3000);
+      } else {
+        errorEl.textContent = data.message;
+      }
+        });
+  </script>
+</body>
+</html>

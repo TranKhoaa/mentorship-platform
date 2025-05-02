@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Login - Mentorship Platform</title>
+  <link rel="stylesheet" href="style.css">
+  <style>
+    .container {
+      width: 400px;
+      margin: 80px auto;
+      background: #fff;
+      padding: 30px;
+      border-radius: 10px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    }
+
+    h2 {
+      text-align: center;
+      margin-bottom: 10px;
+    }
+
+    input {
+      padding: 10px;
+      border-radius: 5px;
+      border: 1px solid #ccc;
+      width: 100%;
+    }
+
+    a {
+      display: block;
+      text-align: center;
+      margin-top: 15px;
+      color: #00b1aa;
+    }
+
+    a:hover {
+      text-decoration: underline;
+    }
+
+    @media (max-width: 500px) {
+  .container {
+    width: 90%;
+    margin: 40px auto;
+    padding: 20px;
+    box-sizing: border-box;
+  }
+
+  h2 {
+    font-size: 24px;
+  }
+
+  input, select, button {
+    font-size: 16px;
+  }
+  input {
+    max-width: 100%;
+  }
+  button {
+    width: 100%;
+  }
+}
+  </style>
+</head>
+<div id="headerContainer"></div>
+<script src="header.js"></script>
+<body>
+  <div class="container">
+    <h2>Log In</h2>
+    <form id="loginForm">
+      <input type="email" id="email" placeholder="Email" >
+      <p class="errorFill" id="emailError"></p>
+      <input type="password" id="password" placeholder="Password" >
+      <p class="errorFill" id="passwordError"></p>
+      <button type="submit">Log In</button>
+    </form>
+    <a href="register.html">Don't have an account? Register</a>
+    <p class="error" id="loginError"></p>
+  </div>
+
+  <script>
+    document.getElementById('loginForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+    const email = document.getElementById('email').value.trim();
+    const password = document.getElementById('password').value.trim();
+
+    const emailError = document.getElementById('emailError');
+    const passwordError = document.getElementById('passwordError');
+    const loginError = document.getElementById('loginError');
+
+    emailError.textContent = '';
+    passwordError.textContent = '';
+    loginError.textContent = '';
+
+    let hasError = false;
+    if (!email) {
+      emailError.textContent = 'Please input email.';
+      hasError = true;
+    }
+
+    if (!password) {
+      passwordError.textContent = 'Please input password.';
+      hasError = true;
+    }
+
+    if (hasError) return;
+
+
+      const res = await fetch('http://localhost:3000/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password })
+      });
+
+      const data = await res.json();
+      if (res.ok) {
+        localStorage.setItem('token', data.token);
+        localStorage.setItem('user', JSON.stringify(data.user));
+
+        try {
+          const profileRes = await fetch('http://localhost:3000/api/profile', {
+            headers: { 'Authorization': 'Bearer ' + data.token }
+          });
+
+          if (profileRes.ok) {
+            const text = await profileRes.text();
+            if (text) {
+              const profileData = JSON.parse(text);
+              if (profileData && profileData.name && profileData.name.trim() !== '') {
+                window.location.href = 'index.html';
+              } else {
+                window.location.href = 'profile.html';
+              }
+            } else {
+              window.location.href = 'profile.html';
+            }
+          }
+        } catch (err) {
+          console.error('Error fetching profile:', err);
+        }
+      } else {
+        loginError.textContent = data.message;
+      }
+    });
+  </script>
+</body>
+</html>

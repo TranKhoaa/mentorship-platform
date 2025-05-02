@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Register - Mentorship Platform</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<style>
+  .container {
+    width: 400px;
+    margin: 80px auto;
+    background: #fff;
+    padding: 30px;
+    border-radius: 10px;
+    box-shadow: 0 0 10px rgba(0,0,0,0.1);
+  }
+
+  h2 {
+    text-align: center;
+    margin-bottom: 20px;
+  }
+
+  input, select {
+    padding: 10px;
+    border-radius: 5px;
+    border: 1px solid #ccc;
+    width: 100%;
+  }
+
+  a {
+    display: block;
+    text-align: center;
+    margin-top: 15px;
+    color: #00b1aa;
+  }
+
+  a:hover {
+    text-decoration: underline;
+  }
+  @media (max-width: 500px) {
+  .container {
+    width: 90%;
+    margin: 40px auto;
+    padding: 20px;
+    box-sizing: border-box;
+  }
+
+  h2 {
+    font-size: 24px;
+  }
+
+  input, select, button {
+    font-size: 16px;
+  }
+  input {
+    max-width: 100%;
+  }
+  button {
+    width: 100%;
+  }
+}
+
+</style>
+<div id="headerContainer"></div>
+<script src="header.js"></script>
+<body>
+  <div class="container">
+    <h2>Register</h2>
+    <form id="registerForm">
+      <input type="email" id="email" placeholder="Email" >
+      <p class="errorFill" id="emailError"></p>
+      <input type="password" id="password" placeholder="Password" >
+      <p class="errorFill" id="passwordError"></p>
+      <select id="role">
+        <option value="">Select Role</option>
+        <option value="mentor">Mentor</option>
+        <option value="mentee">Mentee</option>
+      </select>
+      <p class="errorFill" id="roleError"></p>
+      <button type="submit">Register</button>
+    </form>
+    <a href="login.html">Already have an account? Log in</a>
+    <p class="error" id="registerError"></p>
+  </div>
+
+  <script>
+    document.getElementById('registerForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      const email = document.getElementById('email').value;
+      const password = document.getElementById('password').value;
+      const role = document.getElementById('role').value;
+      
+      const emailError = document.getElementById('emailError');
+      const passwordError = document.getElementById('passwordError');
+      const roleError = document.getElementById('roleError');
+      const registerError = document.getElementById('registerError');
+
+      emailError.textContent = '';
+      passwordError.textContent = '';
+      roleError.textContent = '';
+      registerError.textContent = '';
+
+      let hasError = false;
+
+      if (!email) {
+        emailError.textContent = 'Please enter your email.';
+        hasError = true;
+      }
+
+      if (!password) {
+        passwordError.textContent = 'Please enter your password.';
+        hasError = true;
+      }
+
+      if (!role) {
+        roleError.textContent = 'Please select a role.';
+        hasError = true;
+      }
+
+      if (hasError) return;
+
+      const res = await fetch('http://localhost:3000/api/auth/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password, role })
+      });
+
+      
+
+      const data = await res.json();
+
+      if (res.ok) {
+        window.location.href = 'login.html';
+      } else {
+        registerError.textContent = data.message;
+      }
+    });
+  </script>
+</body>
+</html>

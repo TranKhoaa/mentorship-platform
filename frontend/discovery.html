@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Discover Mentors/Mentees - Mentorship Platform</title>
+  <link rel="stylesheet" href="style.css">
+  <style>
+    .container {
+      width: 800px;
+      margin: 80px auto;
+      background: #fff;
+      padding: 30px;
+      border-radius: 10px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    }
+
+    h2 {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+    @media (max-width: 600px) {
+      .container {
+        width: 90%;
+        margin: 40px auto;
+        padding: 20px;
+        box-sizing: border-box;
+      }
+
+      .filters {
+        flex-direction: column;
+        gap: 15px;
+      }
+
+      .filters select,
+      .filters input,
+      .filters button {
+        width: 100%;
+      }
+
+      .links {
+        display: flex;
+        flex-direction: column;
+        align-items:flex-start;
+      }
+    }
+    
+  </style>
+</head>
+<body>
+  <div id="headerContainer"></div>
+  <script src="header.js"></script>
+
+  <div class="container">
+    <h2>Discover Mentors & Mentees</h2>
+
+    <div class="filters">
+      <select id="roleFilter">
+        <option value="">All Roles</option>
+        <option value="mentor">Mentor</option>
+        <option value="mentee">Mentee</option>
+      </select>
+      <input type="text" id="skillsFilter" placeholder="Filter by Skill">
+      <input type="text" id="interestsFilter" placeholder="Filter by Interest">
+      <button onclick="fetchProfiles()">Search</button>
+    </div>
+    <div id="messageBox" style="text-align:center; margin-bottom:15px; font-weight:bold;"></div>
+    <div id="profilesList"></div>
+
+    <div class="links">
+      <a href="profile.html">My Profile</a> 
+      <a href="requests.html">My Requests</a> 
+      <a href="index.html">Back to homepage</a>
+    </div>
+  </div>
+
+  
+</body>
+</html>
+<script>
+  const token = localStorage.getItem('token');
+  const user = JSON.parse(localStorage.getItem('user'));
+  const currentUserRole = user.role;
+  if (!token) {
+    window.location.href = 'login.html';
+  }
+
+  function logout() {
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
+    window.location.href = 'login.html';
+  }
+
+  async function fetchProfiles() {
+    const role = document.getElementById('roleFilter').value;
+    const skills = document.getElementById('skillsFilter').value;
+    const interests = document.getElementById('interestsFilter').value;
+
+    let url = 'http://localhost:3000/api/discover?';
+    if (role) url += `role=${role}&`;
+    if (skills) url += `skills=${encodeURIComponent(skills)}&`;
+    if (interests) url += `interests=${encodeURIComponent(interests)}&`;
+
+    const res = await fetch(url, {
+      headers: { 'Authorization': 'Bearer ' + token }
+    });
+
+    const data = await res.json();
+    displayProfiles(data);
+  }
+
+  function displayProfiles(profiles) {
+  const list = document.getElementById('profilesList');
+  list.innerHTML = '';
+
+  profiles.forEach(profile => {
+    if (profile.user_id == user.id) return;
+
+    const card = document.createElement('div');
+    card.className = 'card';
+    card.innerHTML = `
+      <h3>${profile.name} (${profile.role})</h3>
+      <p><span class="label-skill">Skills:</span> ${profile.skills}</p>
+      <p><span class="label-interest">Interests:</span> ${profile.interests}</p>
+      <p><strong>Bio:</strong> ${profile.bio}</p>
+    `;
+
+    if (currentUserRole === 'mentee' && profile.role === 'mentor') {
+      const requestBtn = document.createElement('button');
+      requestBtn.textContent = 'Send Mentorship Request';
+      requestBtn.className = 'btn btn-accept'; 
+      requestBtn.onclick = () => sendRequest(profile.user_id);
+      card.appendChild(requestBtn);
+    }
+
+    list.appendChild(card);
+  });
+}
+
+
+  const sentRequests = new Set();
+
+function displayMessage(message, isSuccess = true) {
+  const box = document.getElementById('messageBox');
+  box.textContent = message;
+  box.style.color = isSuccess ? 'green' : 'red';
+
+  setTimeout(() => {
+    box.textContent = '';
+  }, 3000);
+}
+
+async function sendRequest(to_user_id) {
+  if (!currentProfile) {
+    displayMessage('Loading profile data, please try again shortly.', false);
+    return;
+  }
+
+  if (!currentProfile.name || currentProfile.name.trim() === '') {
+    displayMessage('Please complete your profile before requesting a new mentor.', false);
+    return;
+  }
+
+  if (sentRequests.has(to_user_id)) {
+    displayMessage('You have already sent a request to this mentor.', false);
+    return;
+  }
+
+  const res = await fetch('http://localhost:3000/api/requests', {
+    method: 'POST',
+    headers: { 
+      'Content-Type': 'application/json',
+      'Authorization': 'Bearer ' + token
+    },
+    body: JSON.stringify({ to_user_id })
+  });
+
+  const data = await res.json();
+
+  if (res.ok) {
+    displayMessage('Request sent successfully!');
+    sentRequests.add(to_user_id);
+  } else {
+    displayMessage(data.message, false);
+    if (data.message === 'Request already sent to this mentor') {
+      sentRequests.add(to_user_id);
+    }
+  }
+}
+
+
+  fetchProfiles();
+  let currentProfile = null;
+
+  async function fetchMyProfile() {
+    const res = await fetch('http://localhost:3000/api/profile', {
+      headers: { 'Authorization': 'Bearer ' + token }
+    });
+
+    if (res.ok) {
+      currentProfile = await res.json();
+    }
+  }
+
+  fetchMyProfile();
+  fetchProfiles();
+</script>

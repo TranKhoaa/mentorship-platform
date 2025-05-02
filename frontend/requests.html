@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>My Requests - Mentorship Platform</title>
+  <link rel="stylesheet" href="style.css">
+  <style>
+    .container {
+      width: 800px;
+      margin: 80px auto;
+      background: #fff;
+      padding: 30px;
+      border-radius: 10px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    }
+
+    h2 {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+    .links {
+      text-align: center;
+      margin-top: 20px;
+    }
+
+    .links a {
+      margin: 0 10px;
+      color: #00b1aa;
+    }
+
+    .links a:hover {
+      text-decoration: underline;
+    }
+    .btn {
+    padding: 8px 16px;
+    border: none;
+    border-radius: 5px;
+    color: white;
+    cursor: pointer;
+    margin-right: 10px;
+  }
+    .btn-accept {
+      background-color: #28a745; 
+    }
+    .btn-accept:hover {
+      background-color: #218838;
+    }
+
+    .btn-decline {
+      background-color: #dc3545;
+    }
+
+    .btn-decline:hover {
+      background-color: #c82333;
+    }
+
+    .status-pending {
+      color: #ff9800; 
+      font-weight: bold;
+    }
+
+    .status-accepted {
+      color: #28a745; 
+      font-weight: bold;
+    }
+    .status-declined {
+      color: #dc3545; 
+      font-weight: bold;
+    }
+
+    @media (max-width: 500px) {
+  .container {
+    width: 90%;
+    margin: 40px auto;
+    padding: 20px;
+    box-sizing: border-box;
+    font-size: 16px;
+  }
+
+  .links {
+        display: flex;
+        flex-direction: column;
+        align-items:flex-start;
+      }
+}
+  </style>
+</head>
+<div id="headerContainer"></div>
+<script src="header.js"></script>
+<body>
+  <div class="container">
+    <h2>My Mentorship Requests</h2>
+
+    <div class="section">
+      <h3>Incoming Requests</h3>
+      <div id="incomingList"></div>
+    </div>
+
+    <div class="section">
+      <h3>Sent Requests</h3>
+      <div id="sentList"></div>
+    </div>
+
+    <div class="links">
+      <a href="profile.html">My Profile</a> 
+      <a href="discovery.html">Discover Mentors/Mentees</a> 
+      <a href="index.html">Back to homepage</a>
+    </div>
+  </div>
+
+  <script>
+    const token = localStorage.getItem('token');
+    if (!token) {
+      window.location.href = 'login.html';
+    }
+
+    function logout() {
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
+      window.location.href = 'login.html';
+    }
+
+    async function fetchRequests() {
+      const incomingRes = await fetch('http://localhost:3000/api/requests/incoming', {
+        headers: { 'Authorization': 'Bearer ' + token }
+      });
+      const sentRes = await fetch('http://localhost:3000/api/requests/sent', {
+        headers: { 'Authorization': 'Bearer ' + token }
+      });
+
+      const incoming = await incomingRes.json();
+      const sent = await sentRes.json();
+
+      displayIncoming(incoming);
+      displaySent(sent);
+    }
+
+    function displayIncoming(requests) {
+      const list = document.getElementById('incomingList');
+      list.innerHTML = '';
+
+      if (requests.length === 0) {
+        list.innerHTML = '<p>No incoming requests.</p>';
+        return;
+      }
+
+      requests.forEach(req => {
+        const card = document.createElement('div');
+        card.className = 'card';
+        card.innerHTML = `
+          <h3>From: ${req.from_name} (${req.from_email})</h3>
+          <p><strong>Status:</strong> <span class="status-${req.status}">${req.status}</span></p>
+        `;
+
+        if (req.status === 'pending') {
+          const acceptBtn = document.createElement('button');
+          acceptBtn.textContent = 'Accept';
+          acceptBtn.className = 'btn btn-accept';
+          acceptBtn.onclick = () => updateRequest(req.id, 'accepted');
+
+          const declineBtn = document.createElement('button');
+          declineBtn.textContent = 'Decline';
+          declineBtn.className = 'btn btn-decline';
+          declineBtn.onclick = () => updateRequest(req.id, 'declined');
+
+          card.appendChild(acceptBtn);
+          card.appendChild(declineBtn);
+        }
+
+        list.appendChild(card);
+      });
+    }
+
+    function displaySent(requests) {
+      const list = document.getElementById('sentList');
+      list.innerHTML = '';
+
+      if (requests.length === 0) {
+        list.innerHTML = '<p>No sent requests.</p>';
+        return;
+      }
+
+      requests.forEach(req => {
+        const card = document.createElement('div');
+        card.className = 'card';
+        card.innerHTML = `
+          <h3>To: ${req.to_name} (${req.to_email})</h3>
+          <p><strong>Status:</strong> <span class="status-${req.status}">${req.status}</span></p>
+        `;
+        list.appendChild(card);
+      });
+    }
+
+    async function updateRequest(request_id, status) {
+      const res = await fetch('http://localhost:3000/api/requests', {
+        method: 'PATCH',
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer ' + token
+        },
+        body: JSON.stringify({ request_id, status })
+      });
+
+      const data = await res.json();
+
+      if (res.ok) {
+        // alert(`Request ${status}`);
+        fetchRequests();
+      } else {
+        // alert(data.message);
+      }
+    }
+
+    fetchRequests();
+  </script>
+</body>
+</html>
